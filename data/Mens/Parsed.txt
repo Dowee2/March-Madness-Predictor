@@ -1,0 +1,14 @@
+MConferenceTourneyGames.csv
+MGameCities.csv
+MMasseyOrdinals.csv
+MNCAATourneyCompactResults.csv
+MNCAATourneyDetailedResults.csv
+MNCAATourneySeeds.csv
+MNCAATourneySlots.csv
+MRegularSeasonCompactResults.csv
+MRegularSeasonDetailedResults.csv
+MSeasons.csv
+MSecondaryTourneyCompactResults.csv
+MSecondaryTourneyTeams.csv
+MTeamCoaches.csv
+MTeamConferences.csv
