@@ -103,13 +103,16 @@ def main():
             df = calculate_additional_stats(df)
             avg_stats = prepare_team_stats(df)
             
-            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg.csv'
+            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'
             if os.path.exists(stats_path):
                 os.remove(stats_path)
+
+
+                
             avg_stats.to_csv(stats_path, index=False)
 
             prepared_matches = prepare_matchup_data(df, avg_stats)
-            prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchup.csv'
+            prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_w_rating.csv'
             if os.path.exists(prepared_path):
                 os.remove(prepared_path)
             prepared_matches.to_csv(prepared_path, index=False)

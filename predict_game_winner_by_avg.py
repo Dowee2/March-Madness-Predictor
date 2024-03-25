@@ -57,8 +57,8 @@ def fit_model_scalar(model_param, model_name, X, y):
     print(f'{model_name} scalar accuracy: {accuracy:.2f}')
 
 if __name__ == '__main__':
-    df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchup.csv')
-    #df = concat_seasons()
+    #df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchup.csv')
+    df = concat_seasons()
     X = df.drop(['Season','DayNum','team_1', 'team_2', 'team_1_won'], axis=1)
     y = df['team_1_won']
 
