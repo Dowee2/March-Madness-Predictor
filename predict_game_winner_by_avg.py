@@ -1,10 +1,8 @@
 import pandas as pd
 import os
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -23,71 +21,94 @@ def concat_seasons():
     for season in seasons:
         currdir = os.path.join(data_location, season)
         try:
-            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchup.csv')
+            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg.csv')
             all_seasons = pd.concat([all_seasons, season_df])          
         except:
             pass
     return all_seasons
 
-def fit_model(model_param, model_name, X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=3270)
-
-    # sfs = SequentialFeatureSelector(model_param, n_features_to_select=10)
-    # sfs.fit(X_train, y_train)
-    # X_train = sfs.transform(X_train)
-    # X_test = sfs.transform(X_test)
-    model_param.fit(X_train, y_train)
-    y_pred = model_param.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f'{model_name} accuracy: {accuracy:.2f}')
-
 def fit_model_scalar(model_param, model_name, X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=3270)
-
-    # Scale the features
+    tscv = TimeSeriesSplit(n_splits=20)
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    accuracies  = []
+    iteration = 1
+    for train_index, test_index in tscv.split(X):
 
-    # Fit the model
-    model_param.fit(X_train_scaled, y_train)
-    y_pred = model_param.predict(X_test_scaled)
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f'{model_name} scalar accuracy: {accuracy:.2f}')
+        # Scale the features
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        model_param.fit(X_train_scaled, y_train)
+        
+        y_pred = model_param.predict(X_test_scaled)
+        cuurent_accuracy = accuracy_score(y_test, y_pred)
+        print(f'{model_name} iteration {iteration} scalar accuracy: {cuurent_accuracy:.5f}')
+        accuracies.append(cuurent_accuracy)
+        iteration += 1
+    avg_acc = np.mean(accuracies)
+    print(f'{model_name} avg scalar accuracy: {avg_acc:.5f}')
+
+def TimeSeriesSplit_by_season(model, model_name, seasons_data):
+    """
+    Splits the data into training and testing sets by season. Model is trained on all data up to a certain season and tested on the next season until the last season. 
+
+    Parameters:
+    - seasons_data (list): A list of DataFrames containing data for each season.
+
+    Returns:
+    - list: A list of tuples containing training and testing sets for each season.
+    """
+    scaler = StandardScaler()
+    accuracies = []
+    for i in range(1, len(seasons_data)):
+        print(f'Testing on Season {seasons_data[i]["Season"].unique()[0]}')
+        train = pd.concat(seasons_data[:i])
+        train = train.dropna(axis = 'columns', how= 'any')
+        X_train = train.drop(['Season','DayNum','team_1', 'team_2', 'team_1_won'], axis=1)
+        y_train = train['team_1_won']
+        X_train = scaler.fit_transform(X_train)
+        test = seasons_data[i]
+        test = test.dropna(axis = 'columns', how= 'any')
+        X_test = test.drop(['Season','DayNum','team_1', 'team_2', 'team_1_won'], axis=1)
+        X_test = scaler.transform(X_test)
+        y_test = test['team_1_won']
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies.append(accuracy)
+        print(f'accuracy: {accuracy:.5f}')
+
+    print(f'{model_name} avg scalar accuracy: {accuracies:.5f}')
+    return model
+
+
+def train_models(models):
+    seasons_df = concat_seasons()
+    seasons = seasons_df['Season'].unique()
+    seasons_data = [seasons_df[seasons_df['Season'] == season] for season in seasons]
+
+    trained_models = {}
+
+    for curr_name, curr_model in models.items():
+      trained_models[curr_name] = TimeSeriesSplit_by_season(curr_model, curr_name, seasons_data)
+
+    return trained_models
 
 if __name__ == '__main__':
-    #df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchup.csv')
+    #df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchups_avg.csv')
     df = concat_seasons()
     X = df.drop(['Season','DayNum','team_1', 'team_2', 'team_1_won'], axis=1)
     y = df['team_1_won']
 
-    # param_grid = {
-    # 'n_estimators': [50, 100, 200],
-    # 'max_depth': [3, 6, 9],
-    # 'learning_rate': [0.01, 0.1, 0.3],
-    # 'subsample': [0.7, 0.8, 0.9],
-    # 'colsample_bytree': [0.7, 0.8, 0.9],
-    # 'gamma': [0, 0.1, 0.2]
-    # }
-
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=3270)
-    # grid_search = GridSearchCV(XGBClassifier(random_state=3270), param_grid, cv=5, scoring='accuracy', n_jobs=-1)
-    # fitted = grid_search.fit(X_train, y_train)
-    # print(f"Best parameters for Random Forest: {grid_search.best_params_}")
-    # y_pred = fitted.predict(X_test)
-    # accuracy = accuracy_score(y_test, y_pred)
-    # print(f'Random Forest accuracy: {accuracy:.2f}')
-    
-
     # Train the models and fit model
-    models = {
+    classifiers = {
         'Decision Tree': DecisionTreeClassifier(random_state=3270, max_depth=10),
         'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, max_depth=10, min_samples_split=10),
         'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty = None, solver = 'lbfgs', ),
         'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8)
     }
 
-    for name, model in models.items():
-        fit_model(model, name, X, y)
+    for name, model in classifiers.items():
         fit_model_scalar(model, name, X, y)

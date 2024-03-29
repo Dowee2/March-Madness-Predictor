@@ -170,7 +170,7 @@ def main():
             df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
             teams_stats_weekly_df = prepare_team_stats(df)
             
-            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_weekly.csv'
+            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv'
             if os.path.exists(stats_path):
                 os.remove(stats_path)
             teams_stats_weekly_df.to_csv(stats_path, index=False)
@@ -180,7 +180,7 @@ def main():
             weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)
 
             prepared_matches = prepare_matchup_data(df, weekly_stats_df)
-            prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_weekly_matchups.csv'
+            prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10_w_rating.csv'
             if os.path.exists(prepared_path):
                 os.remove(prepared_path)
             prepared_matches.to_csv(prepared_path, index=False)
