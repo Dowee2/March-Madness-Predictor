@@ -5,6 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.naive_bayes import GaussianNB
 from xgboost import XGBClassifier
 
 import predict_game_winner_by_avg as avg
@@ -12,14 +13,18 @@ import predict_game_winner_by_avg_10 as avg_10
 import predict_game_winner_by_avg_w_ratings as avg_rating
 import predict_game_winner_10_games_w_rating as rating
 
+season = 2023
 
 def concat_stats_variants():
+    """
+    Returns the teams final stats calculation before the tournament for each season.
+    """
+
     data_variants = {}
-    for season in range(2003 , 2025):
-        data_variants['avg_10_df'].append(pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_games.csv'))
-        data_variants['avg_rating_df'].append(pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'))
-        data_variants['avg_df'].append(pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10.csv'))       
-        data_variants['rating_rol10_df'].append(pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_games.csv'))
+    data_variants['avg_10_df'] = [pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_games.csv').groupby('TeamID').last().reset_index()]
+    data_variants['avg_rating_df'] = [pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv').groupby('TeamID').last().reset_index()]
+    data_variants['avg_df'] = [pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg.csv').groupby('TeamID').last().reset_index()]  
+    data_variants['rating_rol10_df'] = [pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv').groupby('TeamID').last().reset_index()]
     return data_variants
 
 def build_game_matchups(bracket_team_matchups, team_stats):
@@ -37,11 +42,8 @@ def build_game_matchups(bracket_team_matchups, team_stats):
         team_1 = row['StrongSeed']
         team_2 = row['WeakSeed']
 
-        all_team_1_data = team_stats[team_stats['TeamID'] == team_1]
-        all_team_2_data = team_stats[team_stats['TeamID'] == team_2]
-        team_1_data = all_team_1_data[all_team_1_data['DayNum'] == all_team_1_data['DayNum'].max()]
-        team_2_data = all_team_2_data[all_team_2_data['DayNum'] == all_team_2_data['DayNum'].max()]
-        
+        team_1_data = team_stats[team_stats['TeamID'] == team_1]
+        team_2_data = team_stats[team_stats['TeamID'] == team_2]
         
         team_1_data.columns = [f'team_1_{col}' for col in team_1_data.columns]
         team_2_data.columns = [f'team_2_{col}' for col in team_2_data.columns]
@@ -71,7 +73,7 @@ def preprocess_playins(seeds_df):
     playin_teams_match_df.rename(columns={'Seed': 'Slot'}, inplace=True)
     return playin_teams_match_df.drop(columns='TeamID')
 
-def predict_bracket_winners(bracket_matchups, model, scalar):
+def predict_bracket_winners(bracket_matchups, model, scalar, drop_columns):
     """
     Predict the winners in the lower bracket using a pre-trained model and scaler.
     
@@ -83,7 +85,9 @@ def predict_bracket_winners(bracket_matchups, model, scalar):
     Returns:
     - DataFrame: Lower bracket DataFrame with an additional column 'team_1_won' indicating the predicted winner.
     """
-    bracket_matchups = bracket_matchups.drop(columns= ['team_1_DayNum', 'team_1_Week','team_2_DayNum', 'team_2_Week'])
+    ####TODO: pass in the columns that are supposed to be dropped
+    bracket_matchups = bracket_matchups.drop(columns=drop_columns)
+    # bracket_matchups = bracket_matchups.drop(columns= ['team_1_DayNum', 'team_1_Week','team_2_DayNum', 'team_2_Week'])
     lower_bracket_scaled = scalar.fit_transform(bracket_matchups.drop(columns=['Slot']))
     bracket_matchups['team_1_won'] = model.predict(lower_bracket_scaled)
     return bracket_matchups
@@ -131,16 +135,19 @@ def build_round_matchups(team_seeds, round_slots):
 
     return round_slots
 
-def predict_tourney_bracket(team_stats, model):
-    tourney_seeds_df = pd.read_csv('2023/MNCAATourneySeeds_2023.csv')
+def predict_tourney_bracket(stats_and_models):
+    tourney_seeds_df = pd.read_csv(f'{season}/MNCAATourneySeeds_{season}.csv')
     tourney_seeds_df.drop(columns=['Season'], inplace=True)
-    tourney_slots_df = pd.read_csv('2023/MNCAATourneySlots_2023.csv')
+    tourney_slots_df = pd.read_csv(f'{season}/MNCAATourneySlots_{season}.csv')
 
+    team_stats = stats_and_models['data']
+    model = stats_and_models['model']
+    drop_columns = stats_and_models['drop_columns']
     scalar = StandardScaler()
 
     playin_teams_match_df = preprocess_playins(tourney_seeds_df)
-    bracket_matchups = build_game_matchups(playin_teams_match_df, team_stats[2023])
-    bracket_matchups = predict_bracket_winners(bracket_matchups, model, scalar)
+    bracket_matchups = build_game_matchups(playin_teams_match_df, team_stats[season])
+    bracket_matchups = predict_bracket_winners(bracket_matchups, model, scalar, drop_columns)
     tourney_seeds_df = update_seeds_with_winners(bracket_matchups, tourney_seeds_df)
 
     rounds = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']
@@ -151,10 +158,24 @@ def predict_tourney_bracket(team_stats, model):
 
         round_matchups = build_round_matchups(tourney_seeds_df,curr_round_slots)
         matchups.append(round_matchups)
-        current_round_bracket = build_game_matchups(round_matchups, team_stats[2023])
-        current_round_bracket = predict_bracket_winners(current_round_bracket, model, scalar)
+        current_round_bracket = build_game_matchups(round_matchups, team_stats[season])
+        current_round_bracket = predict_bracket_winners(current_round_bracket, model, scalar, drop_columns)
         tourney_seeds_df = update_seeds_with_winners(current_round_bracket, tourney_seeds_df)
+    return matchups , tourney_seeds_df
 
+def export_bracket_results(bracket_matchups, seeds):
+    """
+    Export the bracket results to a CSV file.
+    
+    Parameters:
+    - matchups (DataFrame): DataFrame containing the bracket matchups.
+    - seeds (DataFrame): DataFrame containing the seeds for the bracket.
+    """
+    for variant in bracket_matchups.keys():
+        for classifier in bracket_matchups[variant].keys():
+            matchups_df = pd.concat(bracket_matchups[variant][classifier], axis=0)
+            matchups_df.to_csv(f'MNCAATourneyPredictions_matchups_{season}_{variant}_{classifier}.csv', index=False)
+            seeds[variant][classifier].to_csv(f'MNCAATourneyPredictions__seeds_{season}_{variant}_{classifier}.csv', index=False)
 
 if __name__ == '__main__':
     # df = pd.read_csv('data/Mens/Season/2022/MRegularSeasonDetailedResults_2022_matchups_avg_10.csv')
@@ -165,29 +186,42 @@ if __name__ == '__main__':
         'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, max_depth=10, min_samples_split=10, n_jobs=-1),
         'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty = None, solver = 'lbfgs'),
         'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8),
-        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, activation = 'logistic', learning_rate = 'invscaling')
+        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, activation = 'logistic', learning_rate = 'invscaling'),
+        'Naive Bayes': GaussianNB()
     }
+    matchups = {}
+    tourney_seeds = {}
+    data = concat_stats_variants()
 
     avg_10_models = avg_10.train_models(classifiers)
-    avg_models = avg.train_models(classifiers)
-    avg_rating_models = avg_rating.train_models(classifiers)
-    rating_models = rating.train_models(classifiers)
-
-    data = concat_stats_variants()
-    avg_10_data = data['avg_10_df']
-    avg_data = data['avg_df']
-    avg_rating_data = data['avg_rating_df']
-    rating_data = data['rating_rol10_df']
-
+    averaged_10_data = {'data': data['avg_10_df'], 'model': avg_10_models, 'drop_columns': ['team_1_DayNum', 'team_1_Week','team_2_DayNum', 'team_2_Week']}
     for model in avg_10_models:
-        predict_tourney_bracket(avg_10_data, avg_10_models[model])
+        matchup, seeds = predict_tourney_bracket(averaged_10_data)
+        matchups['avg_10'][type.__name__] = [matchup]
+        tourney_seeds['avg_10'][type.__name__] = [seeds]
     
+    avg_models = avg.train_models(classifiers)
+    averaged_season_data = {'data': data['avg_df'], 'model': avg_models, 'drop_columns': []}
     for model in avg_models:
-        predict_tourney_bracket(avg_data, avg_models[model])
+        matchup, seeds = predict_tourney_bracket(averaged_season_data)
+        matchups['avg'][type.__name__] = [matchup]
+        tourney_seeds['avg'][type.__name__] = [seeds]
+
     
-    for model in avg_rating_models:
-        predict_tourney_bracket(avg_rating_data, avg_rating_models[model])
+    rating_rol10_models = rating.train_models(classifiers)
+    rating_roll10_data = {'data': data['rating_rol10_df'], 'model': rating_rol10_models, 'drop_columns': ['team_1_DayNum', 'team_1_Week','team_2_DayNum', 'team_2_Week']}
+    for model in rating_rol10_models:
+        matchup, seeds = predict_tourney_bracket(rating_roll10_data)
+        matchups['rating_roll10'][type.__name__] = [matchup]
+        tourney_seeds['rating_roll10'][type.__name__] = [seeds]
+
+
+    # avg_rating_models = avg_rating.train_models(classifiers)
+    # avg_rating_data = {'data': data['avg_rating_df'], 'model': avg_rating_models, 'drop_columns': []}
+    # for model in avg_rating_models:
+    #     matchup, seeds = predict_tourney_bracket(avg_rating_data)
+    #     matchups['avg_rating'][type.__name__] = [matchup]
+    #     tourney_seeds['avg_rating'][type.__name__] = [seeds]
     
-    for model in rating_models:
-        predict_tourney_bracket(rating_data, rating_models[model])
+    export_bracket_results(matchups, tourney_seeds)
     

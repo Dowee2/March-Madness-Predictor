@@ -1,9 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import os
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
@@ -63,16 +65,17 @@ def TimeSeriesSplit_by_season(model, model_name, seasons_data):
     """
     scaler = StandardScaler()
     accuracies = []
+    print(f'Training {model_name} model...')
     for i in range(1, len(seasons_data)):
         print(f'Testing on Season {seasons_data[i]["Season"].unique()[0]}')
         train = pd.concat(seasons_data[:i])
         train = train.dropna(axis = 'columns', how= 'any')
-        X_train = train.drop(['Season','DayNum','team_1_TeamID' ,'team_1_DayNum', 'team_1_Week_x','team_2_TeamID' ,'team_2_DayNum', 'team_2_Week_x', 'team_1_won'], axis=1)
+        X_train = train.drop(['Season','DayNum','team_1_TeamID' ,'team_1_DayNum', 'team_1_Week','team_2_TeamID' ,'team_2_DayNum', 'team_2_Week', 'team_1_won'], axis=1)
         y_train = train['team_1_won']
         X_train = scaler.fit_transform(X_train)
         test = seasons_data[i]
         test = test.dropna(axis = 'columns', how= 'any')
-        X_test = test.drop(['Season','DayNum','team_1_TeamID' ,'team_1_DayNum', 'team_1_Week_x','team_2_TeamID' ,'team_2_DayNum', 'team_2_Week_x', 'team_1_won'], axis=1)
+        X_test = test.drop(['Season','DayNum','team_1_TeamID' ,'team_1_DayNum', 'team_1_Week','team_2_TeamID' ,'team_2_DayNum', 'team_2_Week', 'team_1_won'], axis=1)
         X_test = scaler.transform(X_test)
         y_test = test['team_1_won']
         model.fit(X_train, y_train)
@@ -81,8 +84,8 @@ def TimeSeriesSplit_by_season(model, model_name, seasons_data):
         accuracies.append(accuracy)
         print(f'accuracy: {accuracy:.5f}')
 
-    print(f'{model_name} avg scalar accuracy: {accuracies:.5f}')
-    return model
+    print(f'{model_name} avg scalar accuracy: {np.mean(accuracies):.5f}')
+    return model, accuracies
 
 
 def train_models(models):
@@ -91,15 +94,31 @@ def train_models(models):
     seasons_data = [seasons_df[seasons_df['Season'] == season] for season in seasons]
 
     trained_models = {}
+    accuracy_scores = {}
 
-    for curr_name, curr_model in models.items():
-      trained_models[curr_name] = TimeSeriesSplit_by_season(curr_model, curr_name, seasons_data)
-    
-    return trained_models
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        # Submit tasks
+        future_to_model = {executor.submit(TimeSeriesSplit_by_season, curr_model, curr_name,  seasons_data): curr_name for curr_name, curr_model in models.items()}
+        
+        # Process as each task completes
+        for future in as_completed(future_to_model):
+            curr_name = future_to_model[future]
+            try:
+                model, accuracies = future.result()
+                trained_models[curr_name] = model
+                accuracy_scores[curr_name] = accuracies
+            except Exception as exc:
+                print(f'{curr_name} generated an exception: {exc}')
+
+    # for curr_name, curr_model in models.items():
+    #   model, accuracies = TimeSeriesSplit_by_season(curr_model, curr_name, seasons_data)
+    #   trained_models[curr_name] = model
+    #   accuracy_scores[curr_name] = accuracies
+    return trained_models, accuracy_scores
 
 
 if __name__ == '__main__':
-    #df = pd.read_csv('data/Mens/Season/2024/MRegularSeasonDetailedResults_2024_matchups_avg_10.csv')
+    df = pd.read_csv('data/Mens/Season/2024/MRegularSeasonDetailedResults_2024_matchups_avg_10.csv')
     df = concat_seasons()
     df = df.dropna(axis = 'columns', how= 'any')
     X = df.drop(['Season','DayNum','team_1_TeamID' ,'team_1_DayNum', 'team_1_Week','team_2_TeamID' ,'team_2_DayNum', 'team_2_Week', 'team_1_won'], axis=1)
@@ -111,8 +130,10 @@ if __name__ == '__main__':
         'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, max_depth=10, min_samples_split=10, n_jobs=-1),
         'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty = None, solver = 'lbfgs'),
         'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8),
-        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, activation = 'logistic', learning_rate = 'invscaling')
+        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, activation = 'logistic', learning_rate = 'invscaling'),
+        'Naive Bayes': GaussianNB()
     }
 
+    #train_models(classifiers)
     for name, classifier in classifiers.items():
         fit_model_scalar(classifier, name, X, y)

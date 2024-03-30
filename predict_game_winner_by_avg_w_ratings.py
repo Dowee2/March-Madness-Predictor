@@ -1,15 +1,17 @@
-import pandas as pd
-import os
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+
 import numpy as np
+import pandas as pd
+import os
 
 
 # Read the dataset from the string
@@ -64,6 +66,7 @@ def TimeSeriesSplit_by_season(model, model_name, seasons_data):
     """
     scaler = StandardScaler()
     accuracies = []
+    print(f'Training {model_name} model...')
     for i in range(1, len(seasons_data)):
         print(f'Testing on Season {seasons_data[i]["Season"].unique()[0]}')
         train = pd.concat(seasons_data[:i])
@@ -82,21 +85,38 @@ def TimeSeriesSplit_by_season(model, model_name, seasons_data):
         accuracies.append(accuracy)
         print(f'accuracy: {accuracy:.5f}')
 
-    print(f'{model_name} avg scalar accuracy: {accuracies:.5f}')
-    return model
+    print(f'{model_name} avg scalar accuracy: {np.mean(accuracies):.5f}')
+    return model, accuracies
 
 
 def train_models(models):
     seasons_df = concat_seasons()
+    seasons_df = seasons_df.dropna(axis = 'columns', how= 'any')
     seasons = seasons_df['Season'].unique()
     seasons_data = [seasons_df[seasons_df['Season'] == season] for season in seasons]
 
     trained_models = {}
+    accuracy_scores = {}
 
-    for curr_name, curr_model in models.items():
-      trained_models[curr_name] = TimeSeriesSplit_by_season(curr_model, curr_name, seasons_data)
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        # Submit tasks
+        future_to_model = {executor.submit(TimeSeriesSplit_by_season, curr_model, curr_name,  seasons_data): curr_name for curr_name, curr_model in models.items()}
+        
+        # Process as each task completes
+        for future in as_completed(future_to_model):
+            curr_name = future_to_model[future]
+            try:
+                model, accuracies = future.result()
+                trained_models[curr_name] = model
+                accuracy_scores[curr_name] = accuracies
+            except Exception as exc:
+                print(f'{curr_name} generated an exception: {exc}')
 
-    return trained_models
+    # for curr_name, curr_model in models.items():
+    #   model, accuracies = TimeSeriesSplit_by_season(curr_model, curr_name, seasons_data)
+    #   trained_models[curr_name] = model
+    #   accuracy_scores[curr_name] = accuracies
+    return trained_models, accuracy_scores
 
 if __name__ == '__main__':
     #df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchups_avg_w_rating.csv')
@@ -110,8 +130,10 @@ if __name__ == '__main__':
         'Decision Tree': DecisionTreeClassifier(random_state=3270, max_depth=10),
         'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, max_depth=10, min_samples_split=10),
         'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty = None, solver = 'lbfgs', ),
-        'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8)
+        'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8),
+        'Naive Bayes': GaussianNB()
     }
 
-    for name, classifier in classifiers.items():
-        fit_model_scalar(classifier, name, X, y)
+    trained_models = train_models(classifiers)
+    # for name, classifier in classifiers.items():
+    #     fit_model_scalar(classifier, name, X, y)
