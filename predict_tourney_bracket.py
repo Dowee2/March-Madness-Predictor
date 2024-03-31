@@ -1,31 +1,28 @@
 #!/usr/bin/env python3
 
-#pylint: disable=W0718,W0621,E0401,C0301,R0914
+#pylint: disable=W0718,W0621,E0401,C0301,R0914,W0511
 
 import pandas as pd
-import os
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.naive_bayes import GaussianNB
 from xgboost import XGBClassifier
 
 import train_save_load_all_models as tsm
-
-season = 2023
-
+SEASON = 2023
 def concat_stats_variants():
     """
     Returns the teams final stats calculation before the tournament for each season.
     """
 
     data_variants = {}
-    data_variants['avg_10_df'] = pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_games.csv').groupby('TeamID').last().reset_index()
-    data_variants['avg_rating_df'] = pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv').groupby('TeamID').last().reset_index()
-    data_variants['avg_df'] = pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg.csv').groupby('TeamID').last().reset_index()
-    data_variants['rating_rol10_df'] = pd.read_csv(f'data/Mens/Season/{season}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv').groupby('TeamID').last().reset_index()
+    data_variants['avg_10_df'] = pd.read_csv(f'data/Mens/Season/{SEASON}/MRegularSeasonDetailedResults_{SEASON}_avg_10_games.csv').groupby('TeamID').last().reset_index()
+    data_variants['avg_rating_df'] = pd.read_csv(f'data/Mens/Season/{SEASON}/MRegularSeasonDetailedResults_{SEASON}_avg_w_rating.csv').groupby('TeamID').last().reset_index()
+    data_variants['avg_df'] = pd.read_csv(f'data/Mens/Season/{SEASON}/MRegularSeasonDetailedResults_{SEASON}_avg.csv').groupby('TeamID').last().reset_index()
+    data_variants['rating_rol10_df'] = pd.read_csv(f'data/Mens/Season/{SEASON}/MRegularSeasonDetailedResults_{SEASON}_avg_10_w_rating.csv').groupby('TeamID').last().reset_index()
     return data_variants
 
 def build_game_matchups(bracket_team_matchups, team_stats):
@@ -42,13 +39,10 @@ def build_game_matchups(bracket_team_matchups, team_stats):
     for _, row in bracket_team_matchups.iterrows():
         team_1 = row['StrongSeed']
         team_2 = row['WeakSeed']
-
         team_1_data = team_stats[team_stats['TeamID'] == team_1]
         team_2_data = team_stats[team_stats['TeamID'] == team_2]
-        
         team_1_data.columns = [f'team_1_{col}' for col in team_1_data.columns]
         team_2_data.columns = [f'team_2_{col}' for col in team_2_data.columns]
-        
         team_1_data = team_1_data.reset_index(drop=True)
         team_2_data = team_2_data.reset_index(drop=True)
         matchup_data = pd.concat([team_1_data, team_2_data], axis=1)
@@ -110,7 +104,6 @@ def update_seeds_with_winners(bracket, seeds_df):
         if slot not in bracket_winners:
             bracket_winners[slot] = []
         bracket_winners[slot].append(row['team_1_TeamID'] if row['team_1_won'] == 1 else row['team_2_TeamID'])
-    
     for curr_seed, team in bracket_winners.items():
         seeds_df.loc[len(seeds_df.index)] = [curr_seed, team[0]]
     seeds_df.sort_values(by='Seed', inplace=True)
@@ -137,9 +130,9 @@ def build_round_matchups(team_seeds, round_slots):
     return round_slots
 
 def predict_tourney_bracket(stats_columns, classifier):
-    tourney_seeds_df = pd.read_csv(f'data/Mens/Season/{season}/MNCAATourneySeeds_{season}.csv')
+    tourney_seeds_df = pd.read_csv(f'data/Mens/Season/{SEASON}/MNCAATourneySeeds_{SEASON}.csv')
     tourney_seeds_df.drop(columns=['Season'], inplace=True)
-    tourney_slots_df = pd.read_csv(f'data/Mens/Season/{season}/MNCAATourneySlots_{season}.csv')
+    tourney_slots_df = pd.read_csv(f'data/Mens/Season/{SEASON}/MNCAATourneySlots_{SEASON}.csv')
 
     team_stats = stats_columns['data']
     model = classifier
@@ -176,12 +169,11 @@ def export_bracket_results(bracket_matchups, seeds):
         for classifier in bracket_matchups[variant]:
             for classifier_name, matchups in classifier.items():
                 matchups_df = pd.concat(matchups, axis=0)
-                matchups_df.to_csv(f'MNCAATourneyPredictions_matchups_{season}_{variant}_{classifier_name}.csv', index=False)
-                
+                matchups_df.to_csv(f'MNCAATourneyPredictions_matchups_{SEASON}_{variant}_{classifier_name}.csv', index=False)
     for variant in seeds.keys():
         for classifier in seeds[variant]:
             for classifier_name, seed in classifier.items():
-                seed.to_csv(f'MNCAATourneyPredictions__seeds_{season}_{variant}_{classifier_name}.csv', index=False)
+                seed.to_csv(f'MNCAATourneyPredictions__seeds_{SEASON}_{variant}_{classifier_name}.csv', index=False)
 
 if __name__ == '__main__':
     # df = pd.read_csv('data/Mens/Season/2022/MRegularSeasonDetailedResults_2022_matchups_avg_10.csv')
@@ -209,7 +201,6 @@ if __name__ == '__main__':
         matchup, seeds = predict_tourney_bracket(averaged_10_data, model)
         matchups['avg_10'].append({type(model).__name__ : matchup})
         tourney_seeds['avg_10'].append({type(model).__name__ : seeds})
-    
     avg_models = trained_models['avg']
     averaged_season_data = {'data': data['avg_df'],'drop_columns': []}
     tourney_seeds['avg'] = []
@@ -218,8 +209,6 @@ if __name__ == '__main__':
         matchup, seeds = predict_tourney_bracket(averaged_season_data, model)
         matchups['avg'].append({type(model).__name__ : matchup})
         tourney_seeds['avg'].append({type(model).__name__ : seeds})
-
-    
     rating_rol10_models = trained_models['rating_rol10']
     rating_roll10_data = {'data': data['rating_rol10_df'],'drop_columns': ['team_1_DayNum', 'team_1_Week','team_2_DayNum', 'team_2_Week']}
     matchups['rating_rol10'] = []
@@ -238,6 +227,5 @@ if __name__ == '__main__':
         matchup, seeds = predict_tourney_bracket(avg_rating_data, model)
         matchups['avg_rating'].append({type(model).__name__ : matchup})
         tourney_seeds['avg_rating'].append({type(model).__name__ : seeds})
-    
+
     export_bracket_results(matchups, tourney_seeds)
-    
