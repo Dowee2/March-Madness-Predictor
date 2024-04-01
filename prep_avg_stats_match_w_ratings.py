@@ -53,7 +53,7 @@ def prepare_team_stats(df):
                              'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
     lose_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A',
                                   'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 
-                                  'BlkA', 'PFA']
+                                  'BlkA', 'PFA']    
 
     # Combine winning and losing stats
     all_stats = pd.concat([win_stats, lose_stats])
@@ -112,14 +112,13 @@ def prepare_matchup_data(games_df, stats):
     Returns:
     - DataFrame: Matchup data with team stats and game outcome.
     """
-    stats.set_index('TeamID', inplace=True)
     processed_data = []
 
     for _, row in games_df.iterrows():
         team_1, team_2 = sorted((row['WTeamID'], row['LTeamID']))
         team_1_won = 1 if team_1 == row['WTeamID'] else 0
-        team_1_stats = stats.loc[team_1].add_prefix('team_1_').iloc[-1]
-        team_2_stats = stats.loc[team_2].add_prefix('team_2_').iloc[-1]
+        team_1_stats = stats.loc[(stats['TeamID'] == team_1)].add_prefix('team_1_').iloc[-1]
+        team_2_stats = stats.loc[(stats['TeamID'] == team_2)].add_prefix('team_2_').iloc[-1]
 
         matchup_data = {
             'Season': row['Season'],
@@ -154,6 +153,7 @@ def merge_ratings_stats(ordinal_df, teams_stats_avg_df):
     avg_stats_w_rating = avg_stats_w_rating.sort_values(by=['TeamID']).reset_index(drop=True)
     rank_columns = avg_stats_w_rating.columns[34:]
 
+    # Fill the NaN values in the rank columns with the previous values for each team. If still NaN, then drop the column.
     avg_stats_w_rating[rank_columns] = avg_stats_w_rating.groupby('TeamID')[rank_columns].bfill()
     avg_stats_w_rating = avg_stats_w_rating.dropna(axis = 1, how= 'any')
     return avg_stats_w_rating
@@ -173,14 +173,14 @@ def main():
             df = calculate_additional_stats(df)
             avg_stats = prepare_team_stats(df)
 
-            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'
-            if os.path.exists(stats_path):
-                os.remove(stats_path)
-            avg_stats.to_csv(stats_path, index=False)
-
             ordinal_df = pd.read_csv(f'{currdir}/MMasseyOrdinals_{season}.csv')
             ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
             avg_stats_w_rating = merge_ratings_stats(ordinal_df, avg_stats)
+
+            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'
+            if os.path.exists(stats_path):
+                os.remove(stats_path)
+            avg_stats_w_rating.to_csv(stats_path, index=False)
 
             prepared_matches = prepare_matchup_data(df, avg_stats_w_rating)
             prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_w_rating.csv'

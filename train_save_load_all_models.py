@@ -1,6 +1,14 @@
 
-#pylint: disable=C0114
+#pylint: disable=C0114 ,C0301
+"""
+This script trains and saves multiple machine learning models for predicting the outcome of March Madness games.
 
+The script defines several classifiers including Decision Tree, Random Forest, Logistic Regression, XGBoost, MLP, and Naive Bayes.
+
+Functions:
+    - load_models(): Loads all the trained models and returns them as a dictionary.
+    - save_trained_models(): Trains all the models and saves them to the models folder.
+"""
 from joblib import dump, load
 
 from sklearn.neural_network import MLPClassifier
@@ -15,6 +23,8 @@ import predict_game_winner_by_avg as avg
 import predict_game_winner_by_avg_10 as avg_10
 import predict_game_winner_by_avg_w_ratings as avg_rating
 import predict_game_winner_10_games_w_rating as rating
+
+
 
 classifiers = {
         'Decision Tree': DecisionTreeClassifier(random_state=3270, 
@@ -32,7 +42,6 @@ classifiers = {
     }
 
 
-# Load the models
 def load_models():
     """
     Loads all the trained models and returns them as a dictionary.
@@ -50,7 +59,7 @@ def load_models():
 
     return models
 
-# Save the models
+
 def save_trained_models():
     """
     Trains all the models and saves them to the models folder.
@@ -71,6 +80,7 @@ def save_trained_models():
     avg_rating_models, rating_rol10_models_accuracies = avg_rating.train_models(classifiers)
     dump(avg_rating_models, 'models/avg_rating_models.joblib')
     pd.DataFrame(rating_rol10_models_accuracies).to_csv('models/avg_rating_models_accuracies.csv')
+
 
 if __name__ == '__main__':
     save_trained_models()

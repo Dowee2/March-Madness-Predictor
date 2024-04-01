@@ -1,9 +1,23 @@
 
 #pylint: disable=C0301,C0114,W0718
+"""
+This script prepares and aggregates team statistics and statistics against from game results.
+It calculates additional statistics for two-point field goals and merges the ordinal ratings dataframe with the teams' weekly stats dataframe.
+It also prepares matchup data by merging game data with team stats.
+
+Functions:
+- calculate_additional_stats(df): Adds calculated statistics for two-point field goals to the DataFrame.
+- prepare_team_stats(df): Prepares and aggregates team statistics and statistics against from game results.
+- prep_ordinal_ratings_for_merge(ordinal_df): Preprocesses the ordinal ratings dataframe for merging with other dataframes.
+- merge_ratings_stats(ordinal_df, teams_stats_weekly_df): Merges the ordinal dataframe and the teams' weekly stats dataframe.
+- prepare_matchup_data(games_df, stats): Merges game data with team stats to prepare matchup data.
+- main(): The main method that starts the program.
+"""
 
 import os
 import pandas as pd
 import numpy as np
+
 
 def calculate_additional_stats(df):
     """
@@ -193,14 +207,14 @@ def main():
             df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
             teams_stats_weekly_df = prepare_team_stats(df)
 
-            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv'
-            if os.path.exists(stats_path):
-                os.remove(stats_path)
-            teams_stats_weekly_df.to_csv(stats_path, index=False)
-
             ordinal_df = pd.read_csv(f'{currdir}/MMasseyOrdinals_{season}.csv')
             ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
             weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)
+
+            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv'
+            if os.path.exists(stats_path):
+                os.remove(stats_path)
+            weekly_stats_df.to_csv(stats_path, index=False)
 
             prepared_matches = prepare_matchup_data(df, weekly_stats_df)
             prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10_w_rating.csv'

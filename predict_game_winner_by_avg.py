@@ -1,7 +1,24 @@
 #!/usr/bin/env python3
 
 #pylint: disable=W0718,W0621,E0401,C0301,R0914
+"""
+This script trains and evaluates multiple machine learning models to predict the winner of basketball games in the March Madness tournament based on average statistics of the teams.
 
+The script performs the following steps:
+1. Concatenates the data from multiple seasons into a single DataFrame.
+2. Splits the data into training and testing sets by season.
+3. Trains and evaluates multiple machine learning models using time series cross-validation.
+4. Prints the accuracy of each model for each season and the average accuracy across all seasons.
+
+The script uses the following machine learning models:
+- Decision Tree
+- Random Forest
+- Logistic Regression
+- xGBoost
+- Naive Bayes
+
+Note: The script assumes that the data files are stored in the 'data/Mens/Season/' directory.
+"""
 
 import os
 from concurrent.futures import  ThreadPoolExecutor, as_completed
@@ -17,21 +34,38 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
 
-
-# Read the dataset from the string
-
-
 def concat_seasons():
+    """
+    Concatenates all seasons' data into a single DataFrame.
+
+    Returns:
+    - DataFrame: A DataFrame containing data from all seasons.
+    """
     data_location = 'data/Mens/Season/'
     seasons = os.listdir(data_location)
     all_seasons = pd.DataFrame()
     for season in seasons:
         currdir = os.path.join(data_location, season)
-        season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg.csv')
-        all_seasons = pd.concat([all_seasons, season_df])
+        try:
+            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg.csv')
+            all_seasons = pd.concat([all_seasons, season_df])
+        except FileNotFoundError:
+            pass
     return all_seasons
 
 def fit_model_scalar(model_param, model_name, x, y):
+    """
+    Fits a model using TimeSeriesSplit and calculates accuracy for each iteration.
+
+    Parameters:
+    - model_param: The model to be fitted.
+    - model_name (str): The name of the model.
+    - x (DataFrame): The input features.
+    - y (Series): The target variable.
+
+    Returns:
+    - None
+    """
     tscv = TimeSeriesSplit(n_splits=20)
     scaler = StandardScaler()
     accuracies  = []
@@ -84,6 +118,15 @@ def timeseriessplit_by_season(model, model_name, seasons_data):
 
 
 def train_models(models):
+    """
+    Trains multiple models using TimeSeriesSplit and returns the trained models and their accuracy scores.
+
+    Parameters:
+    - models (dict): A dictionary of models to be trained.
+
+    Returns:
+    - tuple: A tuple containing a dictionary of trained models and a dictionary of accuracy scores for each model.
+    """
     seasons_df = concat_seasons()
     seasons = seasons_df['Season'].unique()
     seasons_data = [seasons_df[seasons_df['Season'] == season] for season in seasons]

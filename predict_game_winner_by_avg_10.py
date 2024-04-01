@@ -26,8 +26,11 @@ def concat_seasons():
     all_seasons = pd.DataFrame()
     for season in seasons:
         currdir = os.path.join(data_location, season)
-        season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10.csv')
-        all_seasons = pd.concat([all_seasons, season_df])
+        try:
+            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10.csv')
+            all_seasons = pd.concat([all_seasons, season_df])
+        except FileNotFoundError:
+            pass
     return all_seasons
 
 def fit_model_scalar(model_param, model_name, x, y):
