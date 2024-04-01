@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
 
-#pylint: disable=W0718,W0621,E0401,C0301,R0914
+#pylint: disable=W0718,W0621,E0401,C0301,R0914,W0718,C0114
 
-import pandas as pd
 import os
+import pandas as pd
+
 
 def calculate_additional_stats(df):
     """
@@ -32,20 +32,29 @@ def prepare_team_stats(df):
     - DataFrame: A DataFrame with average stats per team and stats against.
     """
     # Stats when the team wins
-    win_stats = df[['WTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
-    win_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
-    
+    win_stats = df[['WTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM',
+                    'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
+    win_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM',
+                         'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+
     # Stats against the team when it wins (opponents' performance)
-    win_against_stats = df[['WTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
-    win_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
+    win_against_stats = df[['WTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM',
+                            'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
+    win_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A',
+                                 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
 
     # Stats when the team loses
-    lose_stats = df[['LTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
-    lose_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
-    
+    lose_stats = df[['LTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA',
+                     'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
+    lose_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM',
+                          'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+
     # Stats against the team when it loses (opponents' performance)
-    lose_against_stats = df[['LTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
-    lose_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
+    lose_against_stats = df[['LTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM',
+                             'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
+    lose_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A',
+                                  'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA',
+                                  'BlkA', 'PFA']
 
     # Combine winning and losing stats
     all_stats = pd.concat([win_stats, lose_stats])
@@ -59,7 +68,6 @@ def prepare_team_stats(df):
     avg_merged_stats = pd.merge(avg_stats, avg_against_stats, on='TeamID', suffixes=('', '_A'))
     avg_merged_stats = avg_merged_stats.round(2)
     return avg_merged_stats
-
 
 def prepare_matchup_data(games_df, avg_stats):
     """
@@ -97,6 +105,9 @@ def prepare_matchup_data(games_df, avg_stats):
 
 
 def main():
+    """
+    The main method that starts the program.
+    """
     data_location = 'data/Mens/Season/'
     seasons = os.listdir(data_location)
 
@@ -106,11 +117,11 @@ def main():
             df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
             df = calculate_additional_stats(df)
             avg_stats = prepare_team_stats(df)
-            
+
             stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg.csv'
             if os.path.exists(stats_path):
                 os.remove(stats_path)
-                
+
             avg_stats.to_csv(stats_path, index=False)
 
             prepared_matches = prepare_matchup_data(df, avg_stats)
