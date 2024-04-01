@@ -1,5 +1,8 @@
-import pandas as pd
+
+#pylint: disable=C0114,C0301,W0718
+
 import os
+import pandas as pd
 
 def calculate_additional_stats(df):
     """
@@ -28,20 +31,29 @@ def prepare_team_stats(df):
     - DataFrame: A DataFrame with average stats per team and stats against.
     """
     # Stats when the team wins
-    win_stats = df[['WTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
-    win_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
-    
+    win_stats = df[['WTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM',
+                    'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
+    win_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM',
+                         'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+
     # Stats against the team when it wins (opponents' performance)
-    win_against_stats = df[['WTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
-    win_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
+    win_against_stats = df[['WTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM',
+                            'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
+    win_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A',
+                                 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
 
     # Stats when the team loses
-    lose_stats = df[['LTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
-    lose_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
-    
+    lose_stats = df[['LTeamID', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3', 'LFTM', 'LFTA',
+                     'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
+    lose_stats.columns = ['TeamID', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3', 'FTM', 'FTA',
+                          'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
+
     # Stats against the team when it loses (opponents' performance)
-    lose_against_stats = df[['LTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
-    lose_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 'BlkA', 'PFA']
+    lose_against_stats = df[['LTeamID', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3', 'WFGA3', 'WFTM',
+                             'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl', 'WBlk', 'WPF']].copy()
+    lose_against_stats.columns = ['TeamID', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A', 'FGM3A', 'FGA3A',
+                                  'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA', 'StlA', 
+                                  'BlkA', 'PFA']
 
     # Combine winning and losing stats
     all_stats = pd.concat([win_stats, lose_stats])
@@ -67,7 +79,7 @@ def prep_ordinal_ratings_for_merge(ordinal_df):
     Returns:
         pandas.DataFrame: The preprocessed ordinal ratings dataframe.
     """
-    
+
     ordinal_df = ordinal_df.sort_values(by=['TeamID']).reset_index(drop=True)
     ordinal_df = ordinal_df.drop(columns=['RankingDayNum'])
 
@@ -81,7 +93,8 @@ def prep_ordinal_ratings_for_merge(ordinal_df):
             system_no_rank_all_teams.append(system)
 
     ordinal_df = ordinal_df[~ordinal_df['SystemName'].isin(system_no_rank_all_teams)]
-    ordinal_pivot = ordinal_df.pivot_table(index=['TeamID'], columns='SystemName', values='OrdinalRank').reset_index()
+    ordinal_pivot = ordinal_df.pivot_table(index=['TeamID'], columns='SystemName',
+                                           values='OrdinalRank').reset_index()
     ordinal_pivot.sort_values(by=['TeamID'])
     ordinal_pivot = ordinal_pivot.groupby('TeamID').mean().reset_index()
 
@@ -107,7 +120,7 @@ def prepare_matchup_data(games_df, stats):
         team_1_won = 1 if team_1 == row['WTeamID'] else 0
         team_1_stats = stats.loc[team_1].add_prefix('team_1_').iloc[-1]
         team_2_stats = stats.loc[team_2].add_prefix('team_2_').iloc[-1]
-        
+
         matchup_data = {
             'Season': row['Season'],
             'DayNum': row['DayNum'],
@@ -124,7 +137,8 @@ def prepare_matchup_data(games_df, stats):
 
 def merge_ratings_stats(ordinal_df, teams_stats_avg_df):
     """
-    Merge the ordinal dataframe and the teams' weekly stats dataframe based on the 'TeamID' and 'DayNum' columns.
+    Merge the ordinal dataframe and the teams' weekly stats 
+    dataframe based on the 'TeamID' and 'DayNum' columns.
     
     Args:
         ordinal_df (pandas.DataFrame): The ordinal dataframe containing the team ratings.
@@ -146,6 +160,9 @@ def merge_ratings_stats(ordinal_df, teams_stats_avg_df):
 
 
 def main():
+    """
+    The main method that starts the program.
+    """
     data_location = 'data/Mens/Season/'
     seasons = os.listdir(data_location)
 
@@ -155,7 +172,7 @@ def main():
             df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
             df = calculate_additional_stats(df)
             avg_stats = prepare_team_stats(df)
-            
+
             stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'
             if os.path.exists(stats_path):
                 os.remove(stats_path)
