@@ -196,7 +196,7 @@ def export_bracket_results(bracket_matchups, seeds):
     if convert_to_team_names:
         convert_teamid_to_names(predictions_df)
     else:
-        predictions_df.to_csv(f'MNCAATourneyPredictionsTest_{SEASON}.csv', index=False)
+        predictions_df.to_csv(f'MNCAATourneyPredictions_{SEASON}.csv', index=False)
 
 def convert_teamid_to_names(predictions_df):
     """

@@ -13,6 +13,7 @@ This script is your starting point for model training.
 predict_tourney_bracket.py: 
 Predicts the outcome of the specified season's NCAA tournament games using all models trained by train_save_load_all_models.py. 
 Outputs the completed tournament bracket based on these predictions.
+Output will be named MNCAATourneyPredictions_"Season".csv
 
 Prediction and Training Scripts
 -------------------------------
