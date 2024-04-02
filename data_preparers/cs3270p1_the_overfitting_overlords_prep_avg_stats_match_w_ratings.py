@@ -188,28 +188,5 @@ def main():
         prepared_matches = prepare_matchup_data(season_games, season_stats)
         prepared_matches.to_csv(f'{data_location}/{season}/MRegularSeasonDetailedResults_{season}_matchups_avg_w_rating.csv', index=False)
 
-
-    # for season in seasons:
-    #     currdir = os.path.join(data_location, season)
-    #     try:
-    #         df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
-
-    #         ordinal_df = pd.read_csv(f'{currdir}/MMasseyOrdinals_{season}.csv')
-    #         ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
-    #         avg_stats_w_rating = merge_ratings_stats(ordinal_df, avg_stats)
-
-    #         stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_w_rating.csv'
-    #         if os.path.exists(stats_path):
-    #             os.remove(stats_path)
-    #         avg_stats_w_rating.to_csv(stats_path, index=False)
-
-    #         prepared_matches = prepare_matchup_data(df, avg_stats_w_rating)
-    #         prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_w_rating.csv'
-    #         if os.path.exists(prepared_path):
-    #             os.remove(prepared_path)
-    #         prepared_matches.to_csv(prepared_path, index=False)
-    #     except Exception as e:
-    #         print(f"Error processing {season}: {e}")
-
 if __name__ == "__main__":
     main()

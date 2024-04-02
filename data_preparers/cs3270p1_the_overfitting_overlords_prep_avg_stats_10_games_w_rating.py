@@ -49,31 +49,31 @@ def prepare_team_stats(df):
     """
     df = calculate_additional_stats(df)
     # Stats when the team wins
-    win_stats = df[['WTeamID','DayNum','Week', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3',
+    win_stats = df[['Season','WTeamID','DayNum','Week', 'WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3',
                     'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl',
                     'WBlk', 'WPF']].copy()
-    win_stats.columns = ['TeamID','DayNum','Week', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3',
+    win_stats.columns = ['Season','TeamID','DayNum','Week', 'FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3',
                          'FGA3', 'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
 
     # Stats against the team when it wins (opponents' performance)
-    win_against_stats = df[['WTeamID','DayNum','Week', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2',
+    win_against_stats = df[['Season','WTeamID','DayNum','Week', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2',
                             'LFGM3', 'LFGA3', 'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO',
                             'LStl', 'LBlk', 'LPF']].copy()
-    win_against_stats.columns = ['TeamID','DayNum','Week', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A',
+    win_against_stats.columns = ['Season','TeamID','DayNum','Week', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A',
                                  'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA',
                                  'StlA', 'BlkA', 'PFA']
 
     # Stats when the team loses
-    lose_stats = df[['LTeamID','DayNum','Week', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3',
+    lose_stats = df[['Season','LTeamID','DayNum','Week', 'LFGM', 'LFGA', 'LFGM2', 'LFGA2', 'LFGM3', 'LFGA3',
                      'LFTM', 'LFTA', 'LOR', 'LDR', 'LAst', 'LTO', 'LStl', 'LBlk', 'LPF']].copy()
-    lose_stats.columns = ['TeamID', 'DayNum','Week','FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3',
+    lose_stats.columns = ['Season','TeamID', 'DayNum','Week','FGM', 'FGA', 'FGM2', 'FGA2', 'FGM3', 'FGA3',
                           'FTM', 'FTA', 'OR', 'DR', 'Ast', 'TO', 'Stl', 'Blk', 'PF']
 
     # Stats against the team when it loses (opponents' performance)
-    lose_against_stats = df[['LTeamID','DayNum','Week','WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3',
+    lose_against_stats = df[['Season','LTeamID','DayNum','Week','WFGM', 'WFGA', 'WFGM2', 'WFGA2', 'WFGM3',
                              'WFGA3', 'WFTM', 'WFTA', 'WOR', 'WDR', 'WAst', 'WTO', 'WStl',
                              'WBlk', 'WPF']].copy()
-    lose_against_stats.columns = ['TeamID','DayNum','Week', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A',
+    lose_against_stats.columns = ['Season','TeamID','DayNum','Week', 'FGMA', 'FGAA', 'FGM2A', 'FGA2A',
                                   'FGM3A', 'FGA3A', 'FTMA', 'FTAA', 'ORA', 'DRA', 'AstA', 'TOA',
                                   'StlA', 'BlkA', 'PFA']
 
@@ -81,20 +81,20 @@ def prepare_team_stats(df):
     all_stats = pd.concat([win_stats, lose_stats]).sort_values(by=['TeamID', 'DayNum'])
     all_against_stats = pd.concat([win_against_stats, lose_against_stats]).sort_values(by=['TeamID', 'DayNum'])
 
-    team_daynum_week_for =  all_stats[['TeamID', 'DayNum', 'Week']].reset_index(drop=True)
-    team_daynum_week_against = all_against_stats[['TeamID',
+    team_daynum_week_for =  all_stats[['Season','TeamID', 'DayNum', 'Week']].reset_index(drop=True)
+    team_daynum_week_against = all_against_stats[['Season','TeamID',
                                                   'DayNum', 'Week']].reset_index(drop=True)
 
     all_stats.drop(columns=['Week', 'DayNum'], inplace=True)
     all_against_stats.drop(columns=['Week', 'DayNum'], inplace=True)
 
-    stats_rolling = all_stats.groupby('TeamID').rolling(window=10, min_periods=1).mean().reset_index(drop=True)
-    against_rolling = all_against_stats.groupby('TeamID').rolling(window=10, min_periods=1).mean().reset_index(drop=True)
+    stats_rolling = all_stats.groupby(['Season','TeamID']).rolling(window=10, min_periods=1).mean().reset_index(drop=True)
+    against_rolling = all_against_stats.groupby(['Season','TeamID']).rolling(window=10, min_periods=1).mean().reset_index(drop=True)
 
     stats_rolling = pd.concat([team_daynum_week_for, stats_rolling], axis=1)
     against_rolling = pd.concat([team_daynum_week_against, against_rolling], axis=1)
 
-    merged_stats = pd.merge(stats_rolling, against_rolling, on=['TeamID','DayNum','Week'], suffixes=('', '_A'))
+    merged_stats = pd.merge(stats_rolling, against_rolling, on=['Season','TeamID','DayNum','Week'], suffixes=('', '_A'))
     return merged_stats
 
 
@@ -112,7 +112,7 @@ def prep_ordinal_ratings_for_merge(ordinal_df):
     ordinal_df['Week'] = (ordinal_df['RankingDayNum']-1)/7 +1
     ordinal_df['Week'] = ordinal_df['Week'].apply(np.floor)
 
-    ordinal_df = ordinal_df.sort_values(by=['TeamID', 'RankingDayNum']).reset_index(drop=True)
+    ordinal_df = ordinal_df.sort_values(by=['Season','TeamID', 'RankingDayNum']).reset_index(drop=True)
     ordinal_df = ordinal_df.rename(columns={'RankingDayNum':'DayNum'})
 
     system_names = ordinal_df['SystemName'].unique()
@@ -125,10 +125,10 @@ def prep_ordinal_ratings_for_merge(ordinal_df):
             system_no_rank_all_teams.append(system)
 
     ordinal_df = ordinal_df[~ordinal_df['SystemName'].isin(system_no_rank_all_teams)]
-    ordinal_pivot = ordinal_df.pivot_table(index=['TeamID', 'DayNum','Week'], columns='SystemName', values='OrdinalRank').reset_index()
-    ordinal_pivot.sort_values(by=['TeamID', 'DayNum'])
+    ordinal_pivot = ordinal_df.pivot_table(index=['Season','TeamID', 'DayNum','Week'], columns='SystemName', values='OrdinalRank').reset_index()
+    ordinal_pivot.sort_values(by=['Season','TeamID', 'DayNum'])
     ordinal_pivot = ordinal_pivot.ffill()
-    ordinal_pivot = ordinal_pivot.groupby('TeamID').apply(lambda x: x.interpolate(method='linear', limit_direction='both')).reset_index(drop=True)
+    ordinal_pivot = ordinal_pivot.groupby(['Season','TeamID']).apply(lambda x: x.interpolate(method='linear', limit_direction='both')).reset_index(drop=True)
     return ordinal_pivot
 
 
@@ -144,14 +144,23 @@ def merge_ratings_stats(ordinal_df, teams_stats_weekly_df):
     Returns:
         pandas.DataFrame: The merged dataframe with the team ratings and weekly stats.
     """
-    ordinal_df = ordinal_df.sort_values(by=['TeamID', 'DayNum'])
+    ordinal_df = ordinal_df.sort_values(by=['Season','TeamID', 'DayNum'])
 
-    teams_stats_weekly_df = teams_stats_weekly_df.sort_values(by=['TeamID', 'DayNum'])
-    weekly_stats_w_rating = pd.merge_asof(teams_stats_weekly_df.sort_values('DayNum'), ordinal_df.sort_values('DayNum'), on='DayNum', by='TeamID', direction='backward')
-    weekly_stats_w_rating = weekly_stats_w_rating.sort_values(by=['TeamID', 'DayNum']).reset_index(drop=True)
+    teams_stats_weekly_df = teams_stats_weekly_df.sort_values(by=['Season','TeamID', 'DayNum'])
+    teams_stats_weekly_df['DayNum'] = teams_stats_weekly_df['DayNum'].astype(int)
+    ordinal_df['DayNum'] = ordinal_df['DayNum'].astype(int)
+
+    weekly_stats_w_rating = pd.merge_asof(
+    teams_stats_weekly_df.sort_values(['DayNum']),
+    ordinal_df.sort_values(['DayNum']),
+    on='DayNum',
+    by=['Season','TeamID'],
+    direction='backward'
+)
+    weekly_stats_w_rating = weekly_stats_w_rating.sort_values(by=['Season','TeamID', 'DayNum']).reset_index(drop=True)
     rank_columns = weekly_stats_w_rating.columns[34:]
 
-    weekly_stats_w_rating[rank_columns] = weekly_stats_w_rating.groupby('TeamID')[rank_columns].bfill()
+    weekly_stats_w_rating[rank_columns] = weekly_stats_w_rating.groupby(['Season','TeamID'])[rank_columns].bfill()
     weekly_stats_w_rating = weekly_stats_w_rating.dropna(axis = 1, how= 'any')
     return weekly_stats_w_rating
 
@@ -199,31 +208,53 @@ def main():
     The main method that starts the program.
     """
     data_location = 'data/Mens/Season/'
-    seasons = os.listdir(data_location)
+
+    games_df = pd.DataFrame()
+    ordinal_df = pd.DataFrame()
+
+    for season in range(2003 , 2025):
+        season_games = pd.read_csv(f'{data_location}/{season}/MRegularSeasonDetailedResults_{season}.csv')
+        games_df = pd.concat([games_df, season_games])
+        ordinal_games = pd.read_csv(f'{data_location}/{season}/MMasseyOrdinals_{season}.csv')
+        ordinal_df = pd.concat([ordinal_df, ordinal_games])
+        
+    teams_stats_weekly_df = prepare_team_stats(games_df)
+    ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
+    weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)
+
+    for season in weekly_stats_df['Season'].unique():
+        season_stats = weekly_stats_df[weekly_stats_df['Season'] == season]
+        season_games = games_df[games_df['Season'] == season]
+        season_stats.to_csv(f'{data_location}/{season}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv', index=False)
+        prepared_matches = prepare_matchup_data(season_games, season_stats)
+        prepared_matches.to_csv(f'{data_location}/{season}/MRegularSeasonDetailedResults_{season}_matchups_avg_10_w_rating.csv', index=False)
+
+    # data_location = 'data/Mens/Season/'
+    # seasons = os.listdir(data_location)
 
 
-    for season in seasons:
-        currdir = os.path.join(data_location, season)
-        try:
-            df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
-            teams_stats_weekly_df = prepare_team_stats(df)
+    # for season in seasons:
+    #     currdir = os.path.join(data_location, season)
+    #     try:
+    #         df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}.csv')
+    #         teams_stats_weekly_df = prepare_team_stats(df)
 
-            ordinal_df = pd.read_csv(f'{currdir}/MMasseyOrdinals_{season}.csv')
-            ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
-            weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)
+    #         ordinal_df = pd.read_csv(f'{currdir}/MMasseyOrdinals_{season}.csv')
+    #         ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
+    #         weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)
 
-            stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv'
-            if os.path.exists(stats_path):
-                os.remove(stats_path)
-            weekly_stats_df.to_csv(stats_path, index=False)
+    #         stats_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_avg_10_w_rating.csv'
+    #         if os.path.exists(stats_path):
+    #             os.remove(stats_path)
+    #         weekly_stats_df.to_csv(stats_path, index=False)
 
-            prepared_matches = prepare_matchup_data(df, weekly_stats_df)
-            prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10_w_rating.csv'
-            if os.path.exists(prepared_path):
-                os.remove(prepared_path)
-            prepared_matches.to_csv(prepared_path, index=False)
-        except Exception as e:
-            print(f"Error processing {season}: {e}")
+    #         prepared_matches = prepare_matchup_data(df, weekly_stats_df)
+    #         prepared_path = f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_10_w_rating.csv'
+    #         if os.path.exists(prepared_path):
+    #             os.remove(prepared_path)
+    #         prepared_matches.to_csv(prepared_path, index=False)
+    #     except Exception as e:
+    #         print(f"Error processing {season}: {e}")
 
 if __name__ == "__main__":
     main()

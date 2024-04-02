@@ -79,16 +79,16 @@ def time_series_split_by_season(model, model_name, seasons_data):
         train = train.dropna(axis='columns', how='any')
         x_train = train.drop(
             ['Season', 'DayNum', 'team_1_TeamID', 'team_1_DayNum',
-             'team_1_Week_x', 'team_2_TeamID', 'team_2_DayNum',
-             'team_2_Week_x', 'team_1_won'], axis=1)
+             'team_1_Week_x', 'team_1_Week_y', 'team_2_TeamID', 'team_2_DayNum',
+             'team_2_Week_x','team_2_Week_y', 'team_1_won'], axis=1)
         y_train = train['team_1_won']
         x_train = scaler.fit_transform(x_train)
         test = seasons_data[i]
         test = test.dropna(axis='columns', how='any')
         x_test = test.drop(
             ['Season', 'DayNum', 'team_1_TeamID', 'team_1_DayNum',
-             'team_1_Week_x', 'team_2_TeamID', 'team_2_DayNum',
-             'team_2_Week_x', 'team_1_won'], axis=1)
+             'team_1_Week_x', 'team_1_Week_y', 'team_2_TeamID', 'team_2_DayNum',
+             'team_2_Week_x','team_2_Week_y', 'team_1_won'], axis=1)
         x_test = scaler.transform(x_test)
         y_test = test['team_1_won']
         model.fit(x_train, y_train)
