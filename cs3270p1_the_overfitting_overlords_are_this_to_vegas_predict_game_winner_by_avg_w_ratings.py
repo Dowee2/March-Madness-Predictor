@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
 
-#pylint: disable=W0718,W0621,E0401,C0301,R0914
+#pylint: disable=W0718,W0621,E0401,C0301,R0914,C0103
+
 """
-This script trains and evaluates multiple machine learning models to predict the winner of basketball games in the March Madness tournament based on average statistics of the teams.
+This script trains multiple machine learning models to predict the winner of a basketball game based on average stats and ratings of the teams. 
+It uses the data from multiple seasons and performs time series cross-validation to evaluate the models' performance.
 
-The script performs the following steps:
-1. Concatenates the data from multiple seasons into a single DataFrame.
-2. Splits the data into training and testing sets by season.
-3. Trains and evaluates multiple machine learning models using time series cross-validation.
-4. Prints the accuracy of each model for each season and the average accuracy across all seasons.
+The script contains the following functions:
+- concat_seasons(): Concatenates all seasons' data into a single DataFrame.
+- fit_model_scalar(model_param, model_name, x, y): Fits a model using TimeSeriesSplit and calculates accuracy for each iteration.
+- timeseriessplit_by_season(model, model_name, seasons_data): Splits the data into training and testing sets by season and trains the model on the training data.
+- train_models(models): Trains multiple models using TimeSeriesSplit and returns the trained models and their accuracy scores.
 
-The script uses the following machine learning models:
-- Decision Tree
-- Random Forest
-- Logistic Regression
-- xGBoost
-- Naive Bayes
+To use this script, run it as the main module. It will load the data, preprocess it, train the models, and print the accuracy scores for each model.
 
-Note: The script assumes that the data files are stored in the 'data/Mens/Season/' directory.
+Note: The script assumes that the data files are located in the 'data/Mens/Season/' directory.
 """
 
 import os
-from concurrent.futures import  ThreadPoolExecutor, as_completed
-import numpy as np
-import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -32,7 +27,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
-
+import numpy as np
+import pandas as pd
 
 def concat_seasons():
     """
@@ -47,7 +43,7 @@ def concat_seasons():
     for season in seasons:
         currdir = os.path.join(data_location, season)
         try:
-            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg.csv')
+            season_df = pd.read_csv(f'{currdir}/MRegularSeasonDetailedResults_{season}_matchups_avg_w_rating.csv')
             all_seasons = pd.concat([all_seasons, season_df])
         except FileNotFoundError:
             pass
@@ -89,10 +85,12 @@ def timeseriessplit_by_season(model, model_name, seasons_data):
     Splits the data into training and testing sets by season. Model is trained on all data up to a certain season and tested on the next season until the last season. 
 
     Parameters:
+    - model: The model to be trained.
+    - model_name (str): The name of the model.
     - seasons_data (list): A list of DataFrames containing data for each season.
 
     Returns:
-    - list: A list of tuples containing training and testing sets for each season.
+    - tuple: A tuple containing the trained model and a list of accuracies for each season.
     """
     scaler = StandardScaler()
     accuracies = []
@@ -100,11 +98,13 @@ def timeseriessplit_by_season(model, model_name, seasons_data):
     for i in range(1, len(seasons_data)):
         print(f'Testing on Season {seasons_data[i]["Season"].unique()[0]}')
         train = pd.concat(seasons_data[:i])
-        x_train = train.drop(['Season','DayNum','team_1_won'], axis=1)
+        train = train.dropna(axis='columns', how='any')
+        x_train = train.drop(['Season', 'DayNum', 'team_1_won'], axis=1)
         y_train = train['team_1_won']
         x_train = scaler.fit_transform(x_train)
         test = seasons_data[i]
-        x_test = test.drop(['Season','DayNum','team_1_won'], axis=1)
+        test = test.dropna(axis='columns', how='any')
+        x_test = test.drop(['Season', 'DayNum', 'team_1_won'], axis=1)
         x_test = scaler.transform(x_test)
         y_test = test['team_1_won']
         model.fit(x_train, y_train)
@@ -115,7 +115,6 @@ def timeseriessplit_by_season(model, model_name, seasons_data):
 
     print(f'{model_name} avg scalar accuracy: {np.mean(accuracies):.5f}')
     return model, accuracies
-
 
 def train_models(models):
     """
@@ -128,16 +127,15 @@ def train_models(models):
     - tuple: A tuple containing a dictionary of trained models and a dictionary of accuracy scores for each model.
     """
     seasons_df = concat_seasons()
+    seasons_df = seasons_df.dropna(axis='columns', how='any')
     seasons = seasons_df['Season'].unique()
     seasons_data = [seasons_df[seasons_df['Season'] == season] for season in seasons]
-
     trained_models = {}
     accuracy_scores = {}
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        # Submit tasks
-        future_to_model={executor.submit(timeseriessplit_by_season, curr_model, curr_name,  seasons_data): curr_name for curr_name, curr_model in models.items()}
-        # Process as each task completes
+        future_to_model = {executor.submit(timeseriessplit_by_season, curr_model, curr_name, seasons_data):
+            curr_name for curr_name, curr_model in models.items()}
         for future in as_completed(future_to_model):
             curr_name = future_to_model[future]
             try:
@@ -147,27 +145,19 @@ def train_models(models):
             except Exception as exc:
                 print(f'{curr_name} generated an exception: {exc}')
 
-    # for curr_name, curr_model in models.items():
-    #   model, accuracies = timeseriessplit_by_season(curr_model, curr_name, seasons_data)
-    #   trained_models[curr_name] = model
-    #   accuracy_scores[curr_name] = accuracies
     return trained_models, accuracy_scores
 
 if __name__ == '__main__':
-    #df = pd.read_csv('data/Mens/Season/2015/MRegularSeasonDetailedResults_2015_matchups_avg.csv')
     df = concat_seasons()
-    x = df.drop(['Season','DayNum','team_1', 'team_2', 'team_1_won'], axis=1)
+    df = df.dropna(axis='columns', how='any')
+    x = df.drop(['Season', 'DayNum', 'team_1_won'], axis=1)
     y = df['team_1_won']
-
-    # Train the models and fit model
     classifiers = {
         'Decision Tree': DecisionTreeClassifier(random_state=3270, max_depth=10),
         'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, max_depth=10, min_samples_split=10),
-        'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty = None, solver = 'lbfgs', ),
-        'xGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, learning_rate = 0.1, gamma = 0, subsample = 0.8, colsample_bytree = 0.8),
+        'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, penalty=None, solver='lbfgs'),
+        'xGBoost': XGBClassifier(random_state=3270, n_estimators=100, max_depth=3, learning_rate=0.1, gamma=0, subsample=0.8, colsample_bytree=0.8),
         'Naive Bayes': GaussianNB()
     }
 
-    #train_models(classifiers)
-    for name, model in classifiers.items():
-        fit_model_scalar(model, name, x, y)
+    trained_models = train_models(classifiers)

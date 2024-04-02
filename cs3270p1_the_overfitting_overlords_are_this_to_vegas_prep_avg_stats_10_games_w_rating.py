@@ -1,5 +1,5 @@
 
-#pylint: disable=C0301,C0114,W0718
+#pylint: disable=C0301,C0114,W0718,C0103
 """
 This script prepares and aggregates team statistics and statistics against from game results.
 It calculates additional statistics for two-point field goals and merges the ordinal ratings dataframe with the teams' weekly stats dataframe.

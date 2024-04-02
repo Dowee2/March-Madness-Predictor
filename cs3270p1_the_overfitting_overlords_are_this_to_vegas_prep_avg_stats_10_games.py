@@ -1,5 +1,5 @@
 
-#pylint: disable=C0301,C0114,W0718
+#pylint: disable=C0301,C0114,W0718,C0103
 
 import os
 import pandas as pd
