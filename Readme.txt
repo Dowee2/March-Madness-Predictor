@@ -32,6 +32,23 @@ predict_game_winner_by_avg_stats.py:
     Trains models on the avg_stats dataset and predicts the winners for the specified season games. 
     This dataset summarizes season-long team statistics.
 
+Datasets Description
+Average Stats per Season (avg_stats Dataset)
+Description: This dataset aggregates team performance metrics across an entire season, providing a broad overview of each team's capabilities. Key statistics include average points scored, points allowed, field goal percentage, rebounds, assists, and turnovers.
+Insight: It offers a macroscopic view of team performance, highlighting strengths and weaknesses over the longer term, which is useful for understanding overall team dynamics and seasonal strategies.
+
+Average Stats with Rating per Season (avg_w_rating Dataset)
+Description: Building upon the avg_stats dataset, this variant incorporates team ratings, reflecting the team's standing and perceived strength in various polls and ranking systems.
+Insight: The inclusion of ratings adds a comparative dimension, allowing models to weigh team performances against broader competitive benchmarks and public perceptions.
+
+Last 10 Games Average Stats (avg_10 Dataset)
+Description: This dataset zooms in on the most recent form by calculating average performance metrics over the last 10 games of the season for each team.
+Insight: It captures short-term performance trends, momentum, and potential adjustments in team strategy or lineup, which are critical for predictions close to tournament time.
+
+Last 10 Games with Current Rating (10_games_w_rating Dataset)
+Description: Similar to the avg_10 dataset but enhanced with the inclusion of team ratings at the time of each game.
+Insight: This dataset provides a nuanced snapshot of both recent performance and contemporaneous competitive assessment, ideal for capturing the dynamic nature of team progress and public sentiment.
+
 Data Preprocessing Scripts
 ---------------------------
 prep_avg_stats_10_games.py: 
@@ -58,4 +75,3 @@ This can be found in the main directory. It was last updated on 3/30/2024.
 Seasonal Predictions: 
 For predictions specific to the 2024 season using various data variants, employ the respective prediction scripts. 
 Ensure data preprocessing scripts are executed beforehand to update or create datasets as necessary.
-
