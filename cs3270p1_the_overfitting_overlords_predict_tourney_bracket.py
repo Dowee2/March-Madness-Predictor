@@ -9,7 +9,11 @@ This script predicts the winners of the tournament bracket in March Madness usin
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 
+<<<<<<<< HEAD:cs3270p1_the_overfitting_overlords_predict_tourney_bracket.py
 import cs3270p1_the_overfitting_overlords_train_save_load_all_models as tsm
+========
+import cs3270p1_the_overfitting_overlords_are_this_to_vegas_train_save_load_all_models as tsm
+>>>>>>>> f339b5fb2ac60978ae89281fa7f2fd5ffeb941de:cs3270p1_the_overfitting_overlords_are_this_to_vegas_predict_tourney_bracket.py
 
 SEASON = 2024
 def concat_stats_variants():

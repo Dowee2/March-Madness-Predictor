@@ -1,5 +1,5 @@
 
-#pylint: disable=C0114 ,C0301
+#pylint: disable=C0114 ,C0301,E0401
 """
 This script trains and saves multiple machine learning models for predicting the outcome of March Madness games.
 
@@ -19,10 +19,17 @@ from sklearn.naive_bayes import GaussianNB
 from xgboost import XGBClassifier
 import pandas as pd
 
+<<<<<<<< HEAD:cs3270p1_the_overfitting_overlords_train_save_load_all_models.py
 import cs3270p1_the_overfitting_overlords_predict_game_winner_by_avg as avg
 import cs3270p1_the_overfitting_overlords_predict_game_winner_by_avg_10 as avg_10
 import cs3270p1_the_overfitting_overlords_predict_game_winner_by_avg_w_ratings as avg_rating
 import cs3270p1_the_overfitting_overlords_predict_game_winner_10_games_w_rating as rating
+========
+import cs3270p1_the_overfitting_overlords_are_this_to_vegas_predict_game_winner_by_avg as avg
+import cs3270p1_the_overfitting_overlords_are_this_to_vegas_predict_game_winner_by_avg_10 as avg_10
+import cs3270p1_the_overfitting_overlords_are_this_to_vegas_predict_game_winner_by_avg_w_ratings as avg_rating
+import cs3270p1_the_overfitting_overlords_are_this_to_vegas_predict_game_winner_10_games_w_rating as rating
+>>>>>>>> f339b5fb2ac60978ae89281fa7f2fd5ffeb941de:cs3270p1_the_overfitting_overlords_are_this_to_vegas_train_save_load_all_models.py
 
 
 

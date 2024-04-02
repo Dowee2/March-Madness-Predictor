@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#pylint: disable=W0718,W0621,E0401,C0301,R0914
+#pylint: disable=W0718,W0621,E0401,C0301,R0914,C0103
 """
 This script trains and evaluates multiple machine learning models to predict the winner of basketball games in the March Madness tournament based on average statistics of the teams.
 
