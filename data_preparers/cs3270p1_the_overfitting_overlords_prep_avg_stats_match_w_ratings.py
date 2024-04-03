@@ -1,7 +1,6 @@
 
 #pylint: disable=C0114,C0301,W0718,C0103
 
-import os
 import pandas as pd
 
 def calculate_additional_stats(df):
@@ -101,7 +100,7 @@ def prep_ordinal_ratings_for_merge(ordinal_df):
     ordinal_pivot = ordinal_pivot.ffill()
     ordinal_pivot = ordinal_pivot.groupby(['Season','TeamID']).apply(lambda x: x.interpolate(method='linear', limit_direction='both')).reset_index(drop=True)
     ordinal_pivot = ordinal_pivot.groupby(['Season','TeamID']).mean().reset_index()
-    
+
     return ordinal_pivot
 
 def merge_ratings_stats(ordinal_df, teams_stats_avg_df):
@@ -176,7 +175,7 @@ def main():
         games_df = pd.concat([games_df, season_games])
         ordinal_games = pd.read_csv(f'{data_location}/{season}/MMasseyOrdinals_{season}.csv')
         ordinal_df = pd.concat([ordinal_df, ordinal_games])
-        
+
     avg_stats = prepare_team_stats(games_df)
     ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
     avg_stats_w_rating = merge_ratings_stats(ordinal_df, avg_stats)

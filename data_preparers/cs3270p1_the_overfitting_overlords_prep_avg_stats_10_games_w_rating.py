@@ -14,7 +14,6 @@ Functions:
 - main(): The main method that starts the program.
 """
 
-import os
 import pandas as pd
 import numpy as np
 
@@ -217,7 +216,7 @@ def main():
         games_df = pd.concat([games_df, season_games])
         ordinal_games = pd.read_csv(f'{data_location}/{season}/MMasseyOrdinals_{season}.csv')
         ordinal_df = pd.concat([ordinal_df, ordinal_games])
-        
+
     teams_stats_weekly_df = prepare_team_stats(games_df)
     ordinal_df = prep_ordinal_ratings_for_merge(ordinal_df)
     weekly_stats_df = merge_ratings_stats(ordinal_df, teams_stats_weekly_df)

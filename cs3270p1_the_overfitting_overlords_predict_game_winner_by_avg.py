@@ -173,7 +173,7 @@ if __name__ == '__main__':
         'Naive Bayes': GaussianNB()
     }
 
-    
+
     use_custom_time_series = True
     if use_custom_time_series:
         trained_models, accuracy_scores = train_models(classifiers)
