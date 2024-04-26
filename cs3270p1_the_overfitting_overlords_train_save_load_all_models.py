@@ -28,14 +28,14 @@ import cs3270p1_the_overfitting_overlords_predict_game_winner_10_games_w_rating 
 classifiers = {
         'Decision Tree': DecisionTreeClassifier(random_state=3270, 
                                                 max_depth=10, min_samples_split=10),
-        'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=200, 
+        'Random Forest': RandomForestClassifier(random_state=3270, n_estimators=300, 
                                                 max_depth=10, min_samples_split=10, n_jobs=-1),
-        'Logistic Regression': LogisticRegression(random_state=3270, max_iter=1000, 
+        'Logistic Regression': LogisticRegression(random_state=3270, max_iter=2000, 
                                                   penalty = None, solver = 'lbfgs'),
-        'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 100, max_depth = 3, 
+        'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 300, max_depth = 3, 
                                  learning_rate = 0.1, gamma = 0, subsample = 0.8,
-                                 colsample_bytree = 0.8),
-        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, 
+                                 colsample_bytree = 0.8, tree_method='hist', device = 'cuda'),
+        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 35, 
                              activation = 'logistic', learning_rate = 'invscaling'),
         'Naive Bayes': GaussianNB()
     }

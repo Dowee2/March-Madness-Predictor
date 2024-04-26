@@ -170,7 +170,7 @@ def main():
     games_df = pd.DataFrame()
     ordinal_df = pd.DataFrame()
 
-    for season in range(2003 , 2025):
+    for season in range(2019 , 2025):
         season_games = pd.read_csv(f'{data_location}/{season}/MRegularSeasonDetailedResults_{season}.csv')
         games_df = pd.concat([games_df, season_games])
         ordinal_games = pd.read_csv(f'{data_location}/{season}/MMasseyOrdinals_{season}.csv')
