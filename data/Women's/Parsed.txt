@@ -1,9 +1,0 @@
-WGameCities.csv
-WNCAATourneyCompactResults.csv
-WNCAATourneyDetailedResults.csv
-WNCAATourneySeeds.csv
-WNCAATourneySlots.csv
-WRegularSeasonCompactResults.csv
-WRegularSeasonDetailedResults.csv
-WSeasons.csv
-WTeamConferences.csv

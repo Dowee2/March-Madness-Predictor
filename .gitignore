@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.zip
 
 # Distribution / packaging
 .Python
@@ -155,6 +156,11 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Zip files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
