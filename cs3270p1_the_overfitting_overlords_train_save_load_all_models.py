@@ -24,7 +24,6 @@ import cs3270p1_the_overfitting_overlords_predict_game_winner_by_avg_10 as avg_1
 import cs3270p1_the_overfitting_overlords_predict_game_winner_by_avg_w_ratings as avg_rating
 import cs3270p1_the_overfitting_overlords_predict_game_winner_10_games_w_rating as rating
 
-
 classifiers = {
         'Decision Tree': DecisionTreeClassifier(random_state=3270, 
                                                 max_depth=10, min_samples_split=10),
@@ -35,7 +34,7 @@ classifiers = {
         'XGBoost': XGBClassifier(random_state = 3270, n_estimators = 300, max_depth = 3, 
                                  learning_rate = 0.1, gamma = 0, subsample = 0.8,
                                  colsample_bytree = 0.8, tree_method='hist', device = 'cuda'),
-        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 35, 
+        'MLP': MLPClassifier(random_state = 3270, hidden_layer_sizes = (60,30,15), max_iter = 25, 
                              activation = 'logistic', learning_rate = 'invscaling'),
         'Naive Bayes': GaussianNB()
     }
